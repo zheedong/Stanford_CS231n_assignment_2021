@@ -54,7 +54,11 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W2' and 'b2'.                         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        # ?
+        self.params['W1'] = np.random.normal(0.0, weight_scale, (input_dim, hidden_dim))
+        self.params['b1'] = 0
+
+        self.params['W2'] = np.random.normal(0.0, weight_scale, (hidden_dim, num_classes))
+        self.params['b2'] = 0
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -87,7 +91,12 @@ class TwoLayerNet(object):
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        W1 = self.params['W1']
+        b1 = self.params['b1']
+        W2 = self.params['W2']
+        b2 = self.params['b2']
+        relu_output, relu_cache = affine_relu_forward(X, W1, b1)
+        scores, cache = affine_forward(relu_output, W2, b2)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -111,7 +120,12 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        loss, d_scores = softmax_loss(scores, y)                               # softmax_loss return gradient of scores
+        loss += 0.5 * self.reg * np.sum(np.sum(W1 * W1) + np.sum(W2 * W2))     # Add L2 regularization
+        dx, grads['W2'], grads['b2'] = affine_backward(d_scores, cache)        # cache is cache of last output affine layer
+        dx, grads['W1'], grads['b1'] = affine_relu_backward(dx, relu_cache)
+        grads['W1'] += self.reg * W1        # Add regularization for W1
+        grads['W2'] += self.reg * W2
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
