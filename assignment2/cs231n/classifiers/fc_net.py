@@ -73,7 +73,14 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zeros.                               #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        layer_dims = np.hstack((input_dim, hidden_dims, num_classes))
+        if self.normalization == "batchnorm":
+            # TODO
+            print("Not yet")
+        else:
+            for i in range(self.num_layers):
+                self.params['W' + str(i+1)] = np.random.normal(0.0, weight_scale, (layer_dims[i], layer_dims[i+1]))
+                self.params['b' + str(i+1)] = np.zeros(layer_dims[i + 1])       # 그냥 0이 아니라 numpy 0
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -147,7 +154,21 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        x = X
+        caches = []
 
+        for layerIndex in range(self.num_layers - 1):
+            W_i = self.params['W' + str(layerIndex + 1)]
+            b_i = self.params['b' + str(layerIndex + 1)]
+            output, cache = affine_relu_forward(x, W_i, b_i)
+            
+            caches.append(cache)
+            x = output
+
+        W_i = self.params['W' + str(self.num_layers)]
+        b_i = self.params['b' + str(self.num_layers)]
+        scores, cache = affine_forward(x, W_i, b_i)
+        caches.append(cache)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

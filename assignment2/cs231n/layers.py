@@ -24,7 +24,8 @@ def affine_forward(x, w, b):
     # TODO: Copy over your solution from Assignment 1.                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    N = x.shape[0]
+    out = np.dot(x.reshape(N, -1),w) + b
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -56,6 +57,13 @@ def affine_backward(dout, cache):
     # TODO: Copy over your solution from Assignment 1.                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N = x.shape[0]
+    D = w.shape[0]
+    M = w.shape[1]
+
+    dx = np.dot(dout, w.T).reshape(x.shape)      # expected (N, d_1, ..., d_k) = (10, 2, 3)
+    dw = np.dot(x.T, dout).T.reshape(M, D).T      # expected (D, M) = (6, 5)
+    db = np.sum(dout, axis = 0)                 # expected (M,) = (5,)
 
     pass
 
@@ -81,7 +89,7 @@ def relu_forward(x):
     # TODO: Copy over your solution from Assignment 1.                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    out = np.where(x > 0, x, 0)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -107,7 +115,7 @@ def relu_backward(dout, cache):
     # TODO: Copy over your solution from Assignment 1.                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    dx = dout * np.where(x > 0, 1, 0)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -136,7 +144,20 @@ def softmax_loss(x, y):
     # TODO: Copy over your solution from Assignment 1.                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N = x.shape[0]
 
+    correct_class_score = x[range(x.shape[0]), y]
+    delta = np.ones(x.shape)
+    delta[range(x.shape[0]), y] = 0.0
+
+    margin = x - np.reshape(correct_class_score, (correct_class_score.shape[0], 1)) + delta
+    margin = np.maximum(0.0, margin)
+
+    loss = np.mean(np.sum(margin, axis = 1))
+
+    dx = np.where(margin > 0, 1, 0)                         # dx가 잘 이해 안 됨
+    dx[np.arange(N), y] -= np.sum(margin > 0, axis = 1)     # 여기가 심각함
+    dx = dx / N
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
