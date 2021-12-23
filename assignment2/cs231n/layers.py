@@ -246,7 +246,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         out = scaled_and_shifted
 
         # Store running_mean and var
-        running_mean = momentum * running_mean * (1 - momentum) * mini_batch_mean
+        running_mean = momentum * running_mean + (1 - momentum) * mini_batch_mean
         running_var = momentum * running_var + (1 - momentum) * mini_batch_var
 
         # Backward Cache
@@ -365,7 +365,22 @@ def batchnorm_backward_alt(dout, cache):
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N, D = dout.shape
 
+    sample_mean = cache["sample_mean"]
+    sample_var = cache["sample_var"]
+    xhat = cache["nomalized_data"]       # x_hat
+    x = cache["x"]
+    gamma = cache["gamma"]
+    beta= cache["beta"]
+    eps = cache["eps"] 
+
+    dgamma = np.sum(dout * xhat, axis = 0)
+    dbeta = np.sum(dout, axis = 0) 
+
+    # reference = https://kevinzakka.github.io/2016/09/14/batch_normalization/
+    dxhat = dout * gamma
+    dx = (N * dxhat - np.sum(dxhat, axis = 0) - xhat * np.sum(dxhat * xhat, axis = 0)) / (N * np.sqrt(sample_var + eps))
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
