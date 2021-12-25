@@ -425,7 +425,26 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    x = x.T     # Because it's matrix
+    layer_mean = np.mean(x, axis = 0)   
+    layer_var = np.var(x, axis = 0)
 
+    normalized_data = (x - layer_mean) / (np.sqrt(layer_var + eps))
+    normalized_data = normalized_data.T     # Re transpose
+
+    scaled_and_shifted = normalized_data * gamma + beta
+
+    out = scaled_and_shifted
+
+    # Backward Cache
+    cache = dict()
+    cache["x"] = x.T    # Re transpose
+    cache["nomalized_data"] = normalized_data
+    cache["sample_mean"] = layer_mean
+    cache["sample_var"] = layer_var
+    cache["gamma"] = gamma
+    cache["beta"] = beta
+    cache["eps"] = eps
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -459,7 +478,28 @@ def layernorm_backward(dout, cache):
     # still apply!                                                            #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N, D = dout.shape
 
+    sample_mean = cache["sample_mean"]
+    sample_var = cache["sample_var"]
+    xhat = cache["nomalized_data"]       # x_hat
+    x = cache["x"]
+    gamma = cache["gamma"]
+    beta= cache["beta"]
+    eps = cache["eps"] 
+
+    dgamma = np.sum(dout * xhat, axis = 0)
+    dbeta = np.sum(dout, axis = 0) 
+
+    # reference = https://kevinzakka.github.io/2016/09/14/batch_normalization/
+    dxhat = dout * gamma
+
+    # Transpose - because it's matrix!
+    xhat = xhat.T
+    dxhat = dxhat.T
+
+    dx = (N * dxhat - np.sum(dxhat, axis = 0) - xhat * np.sum(dxhat * xhat, axis = 0)) / (N * np.sqrt(sample_var + eps))
+    dx = dx.T       # Re transpose
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
