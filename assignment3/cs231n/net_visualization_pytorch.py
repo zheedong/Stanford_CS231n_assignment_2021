@@ -33,6 +33,19 @@ def compute_saliency_maps(X, y, model):
     # the gradients with a backward pass.                                        #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N, _, H, W = X.shape
+    scores = model(X)
+    loss = torch.nn.functional.cross_entropy(scores, y)
+    loss.backward()
+
+    max_index = np.argmax(X.grad, axis=1)
+    permuted_X = X.grad.permute(0,2,3,1)
+
+    max_index = max_index.reshape(N * H * W)
+    permuted_X = permuted_X.reshape(N * H * W, 3)
+
+    flatted_saliency = permuted_X.gather(1, max_index.view(-1,1)).squeeze()
+    saliency = flatted_saliency.reshape(N, H, W)
 
     pass
 
@@ -75,7 +88,28 @@ def make_fooling_image(X, target_y, model):
     # You can print your progress over iterations to check your algorithm.       #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    import torch.nn as nn
+    import torch.nn.functional as F
+    learning_rate = 1e-3
+    eps = 1e-5
+    for epoch in range(0,100):
+        scores = model(X_fooling)
+        result = scores.data.max(1)[1][0].item()
+        if epoch % 10 == 0:
+            print(f"Epochs : {epoch} | Result : {result}")
+        if result == target_y:
+            print(f"Early stop at {epoch} epoch")
+            break
+        
+        y = torch.zeros(1, 1000)
+        y[0, target_y] = 1
 
+        loss = nn.CrossEntropyLoss()
+        output = loss(scores, y)
+
+        output.backward()
+        X_fooling.data = X_fooling.data - learning_rate * X_fooling.grad / (torch.linalg.norm(X_fooling.grad, dim=1, ord=2) + eps)
+        X_fooling.grad.zero_()
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -93,6 +127,11 @@ def class_visualization_update_step(img, model, target_y, l2_reg, learning_rate)
     # Be very careful about the signs of elements in your code.            #
     ########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    score = model(img)[:, target_y] - l2_reg * (torch.norm(img))
+    score.backward()
+    img.data += learning_rate * (img.grad) / (torch.norm(img.grad))     # PLUS ??
+    img.grad.data.zero_()
 
     pass
 
